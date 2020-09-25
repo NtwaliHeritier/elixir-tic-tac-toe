@@ -1,6 +1,6 @@
 defmodule Game do
     use GenServer
-    defstruct [player1: %Player{}, player2: %Player{}, array: [1,2,3,4,5,6,7,8,9]]
+    defstruct [player1: %Player{}, player2: %Player{}, array: [1,2,3,4,5,6,7,8,9], entry: true]
     @winning [
                 ["1","2","3"], 
                 ["4","5","6"], 
@@ -32,9 +32,16 @@ defmodule Game do
             end
 
             def play(pid, player) do
-                IO.puts "Pick a position player"
-                place=IO.gets("") |> String.trim |> String.to_integer
-                GenServer.cast(pid, {:play, place, player, pid})
+                game=value(pid)
+                if player==1 do
+                    IO.puts "Pick a position #{game.player1.name}"
+                    place=IO.gets("") |> String.trim |> String.to_integer
+                    GenServer.cast(pid, {:play, place, player, pid})
+                else
+                    IO.puts "Pick a position #{game.player2.name}"
+                    place=IO.gets("") |> String.trim |> String.to_integer
+                    GenServer.cast(pid, {:play, place, player, pid})
+                end
             end
 
             def won(player) do
@@ -50,6 +57,32 @@ defmodule Game do
             def check(pid, number) do
                 GenServer.call(pid, {:check, number})
             end
+
+            def start_play(i, _pid) when i==10, do: tie()
+
+            def start_play(i, pid) do
+                if rem(i,2)==1 do
+                    play(pid, 1)
+                    if value(pid).entry do
+                        display_board(pid)
+                        check(pid, 1)
+                        start_play(i+1, pid)
+                    else
+                        display_board(pid)
+                        start_play(i, pid)
+                    end
+                else
+                    play(pid, 2)
+                    if value(pid).entry do
+                        display_board(pid)
+                        check(pid, 2)
+                        start_play(i+1, pid)
+                    else
+                        display_board(pid)
+                        start_play(i, pid)
+                    end
+                end
+            end
             
             def start(pid) do
                 for x <- 1..2 do
@@ -57,18 +90,7 @@ defmodule Game do
                 end
                 IO.puts "Let the game begin"
                 display_board(pid)
-                for _ <- 1..4 do
-                    play(pid, 1)
-                    display_board(pid)
-                    check(pid, 1)
-                    play(pid, 2)
-                    display_board(pid)
-                    check(pid, 2)
-                end
-                play(pid, 1)
-                display_board(pid)
-                check(pid, 1)
-                tie()
+                start_play(1, pid)
             end
 
             def show(state) do
@@ -138,18 +160,20 @@ defmodule Game do
             end
 
             def handle_cast({:play, position, player, _pid}, state) do
-                if is_integer(Enum.at(state.array, position-1)) do
+                if is_integer(Enum.at(state.array, position-1))&&position <= 9 do
                     if player==1 do
                         playerstate=%{state.player1| array: [position| state.player1.array]}
-                        state=%{state| array: List.replace_at(state.array, position-1, state.player1.key), player1: playerstate}
+                        state=%{state| array: List.replace_at(state.array, position-1, state.player1.key), player1: playerstate, entry: true}
                         {:noreply, state}
                     else
                         playerstate=%{state.player2| array: [position| state.player2.array]}
-                        state=%{state| array: List.replace_at(state.array, position-1, state.player2.key), player2: playerstate}
+                        state=%{state| array: List.replace_at(state.array, position-1, state.player2.key), player2: playerstate, entry: true}
                         {:noreply, state}
                     end
                 else 
-                    IO.puts "Invalid position"
+                    state=%{state| entry: false}
+                    IO.puts "Invalid entry, try again"
+                    {:noreply, state}
                 end
             end
         end
