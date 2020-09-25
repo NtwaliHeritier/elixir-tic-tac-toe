@@ -13,8 +13,8 @@ defmodule Game do
             ]
 
             #Client
-            def start_link(_val) do
-                GenServer.start_link(__MODULE__, %Game{}, name: :game)
+            def start_link(initial) do
+                GenServer.start_link(__MODULE__, initial, name: :game)
             end
 
             def value(val \\ 0) do
