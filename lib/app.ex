@@ -1,6 +1,6 @@
-defmodule Tictactoe do
+defmodule App do
   @moduledoc """
-  Documentation for `Tictactoe`.
+  Documentation for `App`.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule Tictactoe do
 
   ## Examples
 
-      iex> Tictactoe.hello()
+      iex> App.hello()
       :world
 
   """

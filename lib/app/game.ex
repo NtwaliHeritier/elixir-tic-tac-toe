@@ -13,34 +13,34 @@ defmodule Game do
             ]
 
             #Client
-            def start_link do
-                GenServer.start_link(__MODULE__, %Game{})
+            def start_link(_val) do
+                GenServer.start_link(__MODULE__, %Game{}, name: :game)
             end
 
-            def value(pid, val \\ 0) do
-                GenServer.call(pid, {:value, val})
+            def value(val \\ 0) do
+                GenServer.call(:game, {:value, val})
             end
 
-            def create(pid, num) do
+            def create(num) do
                 IO.puts "Enter a name player#{num}"
                 name=IO.gets("") |> String.trim
-                GenServer.cast(pid, {:create, name, num})
+                GenServer.cast(:game, {:create, name, num})
             end
 
-            def display_board(pid, val \\ 0) do
-                GenServer.call(pid, {:display, val})
+            def display_board(val \\ 0) do
+                GenServer.call(:game, {:display, val})
             end
 
-            def play(pid, player) do
-                game=value(pid)
+            def play(player) do
+                game=value()
                 if player==1 do
                     IO.puts "Pick a position #{game.player1.name}"
                     place=IO.gets("") |> String.trim |> String.to_integer
-                    GenServer.cast(pid, {:play, place, player, pid})
+                    GenServer.cast(:game, {:play, place, player})
                 else
                     IO.puts "Pick a position #{game.player2.name}"
                     place=IO.gets("") |> String.trim |> String.to_integer
-                    GenServer.cast(pid, {:play, place, player, pid})
+                    GenServer.cast(:game, {:play, place, player})
                 end
             end
 
@@ -54,43 +54,43 @@ defmodule Game do
                 Process.exit(self(), :tie)
             end
 
-            def check(pid, number) do
-                GenServer.call(pid, {:check, number})
+            def check(number) do
+                GenServer.call(:game, {:check, number})
             end
 
-            def start_play(i, _pid) when i==10, do: tie()
+            def start_play(i) when i==10, do: tie()
 
-            def start_play(i, pid) do
+            def start_play(i) do
                 if rem(i,2)==1 do
-                    play(pid, 1)
-                    if value(pid).entry do
-                        display_board(pid)
-                        check(pid, 1)
-                        start_play(i+1, pid)
+                    play(1)
+                    if value().entry do
+                        display_board()
+                        check(1)
+                        start_play(i+1)
                     else
-                        display_board(pid)
-                        start_play(i, pid)
+                        display_board()
+                        start_play(i)
                     end
                 else
-                    play(pid, 2)
-                    if value(pid).entry do
-                        display_board(pid)
-                        check(pid, 2)
-                        start_play(i+1, pid)
+                    play(2)
+                    if value().entry do
+                        display_board()
+                        check(2)
+                        start_play(i+1)
                     else
-                        display_board(pid)
-                        start_play(i, pid)
+                        display_board()
+                        start_play(i)
                     end
                 end
             end
             
-            def start(pid) do
+            def start() do
                 for x <- 1..2 do
-                    create(pid, x)
+                    create(x)
                 end
                 IO.puts "Let the game begin"
-                display_board(pid)
-                start_play(1, pid)
+                display_board()
+                start_play(1)
             end
 
             def show(state) do
@@ -159,7 +159,7 @@ defmodule Game do
                 end
             end
 
-            def handle_cast({:play, position, player, _pid}, state) do
+            def handle_cast({:play, position, player}, state) do
                 if is_integer(Enum.at(state.array, position-1))&&position <= 9 do
                     if player==1 do
                         playerstate=%{state.player1| array: [position| state.player1.array]}
