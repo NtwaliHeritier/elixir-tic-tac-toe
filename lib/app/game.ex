@@ -35,13 +35,16 @@ defmodule Game do
                 game=value()
                 if player==1 do
                     IO.puts "Pick a position #{game.player1.name}"
-                    place=IO.gets("") |> String.trim |> String.to_integer
-                    GenServer.cast(:game, {:play, place, player})
                 else
                     IO.puts "Pick a position #{game.player2.name}"
-                    place=IO.gets("") |> String.trim |> String.to_integer
-                    GenServer.cast(:game, {:play, place, player})
                 end
+                    place=IO.gets("") |> String.trim
+                    if String.match?(place, ~r/[a-zA-Z]/) do
+                        GenServer.cast(:game, {:play, place, player})
+                    else
+                        place=String.to_integer(place)
+                        GenServer.cast(:game, {:play, place, player})
+                    end
             end
 
             def won(player) do
@@ -160,7 +163,7 @@ defmodule Game do
             end
 
             def handle_cast({:play, position, player}, state) do
-                if is_integer(Enum.at(state.array, position-1))&&position <= 9 do
+                if is_integer(position)&&is_integer(Enum.at(state.array, position-1))&&position <= 9 do
                     if player==1 do
                         playerstate=%{state.player1| array: [position| state.player1.array]}
                         state=%{state| array: List.replace_at(state.array, position-1, state.player1.key), player1: playerstate, entry: true}
