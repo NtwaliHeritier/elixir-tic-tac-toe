@@ -2,8 +2,6 @@
 
 > In this project, I creaated a Tic Tac Toe Game using Elixir.
 
-The main goal of this project is to ensure the mastery of the methods ruby provides and to learn how to replicate them using basic coding knowledge.
-
 Below is a basic demonstration of how the tic tac toe game works
 
 ![screenshot](./assets/gif.gif)
